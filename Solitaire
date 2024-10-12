@@ -1,0 +1,171 @@
+import 'package:flutter/material.dart';
+import 'dart:math';
+
+void main() {
+  runApp(SolitaireApp());
+}
+
+class SolitaireApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Solitaire',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: SolitaireHome(),
+    );
+  }
+}
+
+class SolitaireHome extends StatefulWidget {
+  @override
+  _SolitaireHomeState createState() => _SolitaireHomeState();
+}
+
+class _SolitaireHomeState extends State<SolitaireHome> {
+  List<CardModel> deck = [];
+  List<List<CardModel>> columns = [[], [], [], [], [], [], [], []];
+  List<List<CardModel>> foundations = [[], [], [], []];
+
+  @override
+  void initState() {
+    super.initState();
+    _initDeck();
+    _dealCards();
+  }
+
+  void _initDeck() {
+    List<String> suits = ['♠', '♥', '♦', '♣'];
+    List<String> ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+
+    deck.clear();
+    for (var suit in suits) {
+      for (var rank in ranks) {
+        deck.add(CardModel(rank, suit));
+      }
+    }
+    deck.shuffle(Random());
+  }
+
+  void _dealCards() {
+    for (var column in columns) {
+      column.clear();
+    }
+    for (var foundation in foundations) {
+      foundation.clear();
+    }
+
+    for (int i = 0; i < 4; i++) {
+      for (int j = 0; j < 7; j++) {
+        if (deck.isNotEmpty) {
+          columns[i].add(deck.removeLast());
+        }
+      }
+    }
+
+    for (int i = 4; i < 8; i++) {
+      for (int j = 0; j < 6; j++) {
+        if (deck.isNotEmpty) {
+          columns[i].add(deck.removeLast());
+        }
+      }
+    }
+
+    setState(() {});
+  }
+
+  bool canPlaceCard(CardModel cardToPlace, CardModel? baseCard) {
+    if (baseCard == null) return true; 
+    return (cardToPlace.rankIndex == baseCard.rankIndex - 1) && (cardToPlace.isRed != baseCard.isRed);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Solitaire'),
+      ),
+      body: Column(
+        children: [
+          // Foundations
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ...List.generate(4, (index) {
+                return Expanded(
+                  child: Container(
+                    height: 120, 
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.black),
+                    ),
+                    child: Center(child: Container()), 
+                  ),
+                );
+              }),
+              ...List.generate(4, (index) {
+                return Expanded(
+                  child: Container(
+                    height: 120, 
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.black),
+                    ),
+                    child: Center(child: Container()),
+                  ),
+                );
+              }),
+            ],
+          ),
+          SizedBox(height: 20),
+
+          Expanded(
+            child: Row(
+              children: List.generate(8, (index) {
+                return Expanded(
+                  child: Column(
+                    children: columns[index].map((card) {
+                      return GestureDetector(
+                        onTap: () {
+                          if (columns[index].last == card) {
+                            print('Tapped on ${card.rank}${card.suit}');
+                          }
+                        },
+                        child: Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Text(
+                              '${card.rank} ${card.suit}',
+                              style: TextStyle(fontSize: 20),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                );
+              }),
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          _initDeck();
+          _dealCards();
+        },
+        tooltip: 'Reset Game',
+        child: Icon(Icons.refresh),
+      ),
+    );
+  }
+}
+
+class CardModel {
+  final String rank;
+  final String suit;
+  late final int rankIndex;
+  late final bool isRed;
+
+  CardModel(this.rank, this.suit) {
+    rankIndex = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'].indexOf(rank);
+    isRed = suit == '♥' || suit == '♦';
+  }
+}
